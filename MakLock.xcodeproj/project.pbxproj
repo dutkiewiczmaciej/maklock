@@ -47,6 +47,7 @@
 		A10000000000000000000C01 /* WatchProximityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000C11 /* WatchProximityService.swift */; };
 		A10000000000000000000D01 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000D11 /* OnboardingView.swift */; };
 		A10000000000000000000D02 /* OnboardingWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000D12 /* OnboardingWindow.swift */; };
+		A10000000000000000000E01 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000E11 /* AboutView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -92,6 +93,7 @@
 		A10000000000000000000C11 /* WatchProximityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchProximityService.swift; sourceTree = "<group>"; };
 		A10000000000000000000D11 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A10000000000000000000D12 /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
+		A10000000000000000000E11 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -229,6 +231,7 @@
 				A10000000000000000000514 /* AppsSettingsView.swift */,
 				A10000000000000000000515 /* SecuritySettingsView.swift */,
 				A10000000000000000000516 /* WatchSettingsView.swift */,
+				A10000000000000000000E11 /* AboutView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -403,6 +406,7 @@
 				A10000000000000000000C01 /* WatchProximityService.swift in Sources */,
 				A10000000000000000000D01 /* OnboardingView.swift in Sources */,
 				A10000000000000000000D02 /* OnboardingWindow.swift in Sources */,
+				A10000000000000000000E01 /* AboutView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
