@@ -67,5 +67,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if Defaults.shared.appSettings.lockOnIdle {
             IdleMonitorService.shared.startMonitoring()
         }
+
+        // Wire up sleep/wake → lock all protected apps on sleep
+        SleepWakeService.shared.onSleep = { [weak self] in
+            guard let self else { return }
+            let apps = ProtectedAppsManager.shared.apps.filter(\.isEnabled)
+            for app in apps {
+                OverlayWindowService.shared.show(for: app)
+            }
+            if !apps.isEmpty {
+                self.menuBarController.iconState = .locked
+            }
+        }
+
+        // Start sleep/wake observer
+        SleepWakeService.shared.startObserving()
     }
 }
