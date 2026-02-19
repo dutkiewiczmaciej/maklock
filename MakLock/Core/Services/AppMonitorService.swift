@@ -14,7 +14,7 @@ final class AppMonitorService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     /// Apps that have been authenticated in the current session.
-    /// These will NOT be re-locked until explicitly cleared (idle, sleep, manual).
+    /// Cleared when the app terminates, on idle timeout, sleep, or manual clear.
     private var authenticatedApps: Set<String> = []
 
     private init() {}
@@ -39,20 +39,51 @@ final class AppMonitorService: ObservableObject {
             }
             .store(in: &cancellables)
 
+        // Monitor app terminations — clear auth when a protected app quits
+        workspace.notificationCenter.publisher(for: NSWorkspace.didTerminateApplicationNotification)
+            .compactMap { $0.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication }
+            .sink { [weak self] app in
+                guard let bundleID = app.bundleIdentifier else { return }
+                if self?.authenticatedApps.contains(bundleID) == true {
+                    self?.authenticatedApps.remove(bundleID)
+                    NSLog("[MakLock] App terminated, auth cleared: %@", bundleID)
+                }
+            }
+            .store(in: &cancellables)
+
         NSLog("[MakLock] App monitor started")
 
         // Check already-running protected apps (e.g. after MakLock restart)
-        // Delay briefly to let the UI finish loading
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.checkRunningApps()
         }
     }
 
     /// Scan currently running apps and trigger lock for any protected ones.
     private func checkRunningApps() {
+        let protectedList = Defaults.shared.protectedApps
+        let settings = Defaults.shared.appSettings
+
+        NSLog("[MakLock] checkRunningApps: %d protected, protection=%@",
+              protectedList.count, settings.isProtectionEnabled ? "ON" : "OFF")
+
+        guard settings.isProtectionEnabled else { return }
+
         let workspace = NSWorkspace.shared
         for runningApp in workspace.runningApplications {
-            handleAppEvent(runningApp)
+            guard let bundleID = runningApp.bundleIdentifier else { continue }
+
+            if let protectedApp = protectedList.first(where: {
+                $0.bundleIdentifier == bundleID && $0.isEnabled
+            }) {
+                guard !authenticatedApps.contains(bundleID) else { continue }
+                guard !OverlayWindowService.shared.isShowing else { continue }
+
+                NSLog("[MakLock] Found running protected app: %@ (%@)", protectedApp.name, bundleID)
+                detectedApp = protectedApp
+                onProtectedAppDetected?(protectedApp)
+                return // Only lock one at a time
+            }
         }
     }
 
@@ -62,7 +93,7 @@ final class AppMonitorService: ObservableObject {
         NSLog("[MakLock] App monitor stopped")
     }
 
-    /// Mark an app as authenticated. It stays unlocked until session is cleared.
+    /// Mark an app as authenticated. It stays unlocked until the app quits, idle, or sleep.
     func markAuthenticated(_ bundleIdentifier: String) {
         authenticatedApps.insert(bundleIdentifier)
         NSLog("[MakLock] App session authenticated: %@", bundleIdentifier)

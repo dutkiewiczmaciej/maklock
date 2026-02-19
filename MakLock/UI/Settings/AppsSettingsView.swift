@@ -63,6 +63,7 @@ struct AppsSettingsView: View {
                         set: { _ in manager.toggleApp(app) }
                     ))
                     .toggleStyle(.switch)
+                    .labelsHidden()
 
                     Button(action: { manager.removeApp(app) }) {
                         Image(systemName: "trash")
@@ -71,6 +72,7 @@ struct AppsSettingsView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                .id(app.id)
                 .padding(.vertical, 4)
             }
             .onDelete { indexSet in
