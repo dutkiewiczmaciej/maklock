@@ -43,6 +43,7 @@
 		A10000000000000000000901 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000911 /* AuthenticationService.swift */; };
 		A10000000000000000000902 /* PasswordInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000912 /* PasswordInputView.swift */; };
 		A10000000000000000000A01 /* IdleMonitorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000A11 /* IdleMonitorService.swift */; };
+		A10000000000000000000B01 /* SleepWakeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000B11 /* SleepWakeService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -84,6 +85,7 @@
 		A10000000000000000000911 /* AuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationService.swift; sourceTree = "<group>"; };
 		A10000000000000000000912 /* PasswordInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordInputView.swift; sourceTree = "<group>"; };
 		A10000000000000000000A11 /* IdleMonitorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdleMonitorService.swift; sourceTree = "<group>"; };
+		A10000000000000000000B11 /* SleepWakeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepWakeService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +146,7 @@
 				A10000000000000000000813 /* OverlayWindowService.swift */,
 				A10000000000000000000911 /* AuthenticationService.swift */,
 				A10000000000000000000A11 /* IdleMonitorService.swift */,
+				A10000000000000000000B11 /* SleepWakeService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -379,6 +382,7 @@
 				A10000000000000000000901 /* AuthenticationService.swift in Sources */,
 				A10000000000000000000902 /* PasswordInputView.swift in Sources */,
 				A10000000000000000000A01 /* IdleMonitorService.swift in Sources */,
+				A10000000000000000000B01 /* SleepWakeService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
