@@ -1,0 +1,101 @@
+<p align="center">
+  <img src="Resources/icon.png" width="128" height="128" alt="MakLock icon">
+</p>
+
+<h1 align="center">MakLock</h1>
+
+<p align="center">
+  <strong>Lock any macOS app with Touch ID or password.</strong><br>
+  Free and open source.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-macOS%2013%2B-black?style=flat-square" alt="Platform">
+  <img src="https://img.shields.io/badge/swift-5.9%2B-FFD213?style=flat-square" alt="Swift">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-white?style=flat-square" alt="License"></a>
+</p>
+
+---
+
+## What is MakLock?
+
+MakLock is a lightweight menu bar app that protects your macOS applications with Touch ID or a backup password. When someone tries to open a protected app, MakLock shows a lock overlay and requires authentication before granting access.
+
+### MakLock vs AppLocker
+
+| Feature | MakLock | AppLocker |
+|---------|:-------:|:---------:|
+| Price | **Free** | $0.99/month |
+| Touch ID unlock | Single prompt | Double prompt |
+| Full-screen overlay | Yes | No |
+| App termination on lock | Yes | No |
+| Auto-lock on idle | Yes | No |
+| Auto-lock on sleep | Yes | No |
+| Apple Watch unlock | Yes | No |
+| Open source | Yes | No |
+
+## Features
+
+- [ ] Menu bar app (no Dock icon)
+- [ ] Lock apps with Touch ID
+- [ ] Password fallback
+- [ ] Full-screen blur overlay
+- [ ] Auto-lock after idle timeout
+- [ ] Auto-lock on sleep/wake
+- [ ] Apple Watch proximity unlock
+- [ ] Panic key emergency exit
+- [ ] System app blacklist (never locks Terminal, Xcode, etc.)
+
+## Screenshots
+
+> Coming soon.
+
+## Installation
+
+### Download
+
+> First release coming soon. Download the latest `.dmg` from [Releases](https://github.com/dutkiewiczmaciej/maklock/releases).
+
+### Build from Source
+
+```bash
+git clone https://github.com/dutkiewiczmaciej/maklock.git
+cd maklock
+open MakLock.xcodeproj
+```
+
+Build and run with `Cmd+R`. Requires Xcode 15+ and macOS 13+.
+
+## Architecture
+
+MakLock is a native Swift/SwiftUI application distributed outside the App Store for full overlay and process management capabilities.
+
+```
+MakLock/
+  App/        Entry point, AppDelegate, AppState
+  Core/       Services, Managers, Storage
+  UI/         Design system, Components, Views
+  Models/     Data models
+  Resources/  Assets, Entitlements
+```
+
+**Key frameworks:** SwiftUI, AppKit, LocalAuthentication, CoreBluetooth, IOKit, HotKey (SPM)
+
+## Safety
+
+MakLock includes multiple safety mechanisms to ensure you never get locked out:
+
+- **Panic key** — `Cmd+Option+Shift+Control+U` instantly dismisses all overlays
+- **System blacklist** — Terminal, Xcode, Activity Monitor, and other system apps can never be locked
+- **Timeout failsafe** — Overlays auto-dismiss after 60 seconds without interaction
+- **Dev mode** — DEBUG builds include a Skip button and 10-second auto-dismiss
+
+## Requirements
+
+- macOS 13.0 (Ventura) or later
+- Apple Silicon or Intel Mac
+- Touch ID recommended (password fallback available)
+
+## License
+
+[MIT](LICENSE) — Made by [MakMak](https://github.com/dutkiewiczmaciej)
