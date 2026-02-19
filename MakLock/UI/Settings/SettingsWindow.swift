@@ -17,6 +17,12 @@ final class SettingsWindowController {
     }
 
     @objc func openSettings() {
+        // Don't allow opening settings until onboarding is complete
+        guard Defaults.shared.hasCompletedOnboarding else {
+            OnboardingWindowController.shared.show()
+            return
+        }
+
         if let window {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)

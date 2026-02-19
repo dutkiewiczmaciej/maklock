@@ -13,6 +13,12 @@ final class AppMonitorService: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
 
+    /// Apps that have been authenticated recently. Key: bundleIdentifier, Value: auth timestamp.
+    private var authenticatedApps: [String: Date] = [:]
+
+    /// Grace period after authentication during which the app won't be re-locked.
+    private let gracePeriod: TimeInterval = 5
+
     private init() {}
 
     /// Start monitoring app launches and activations.
@@ -44,6 +50,23 @@ final class AppMonitorService: ObservableObject {
         NSLog("[MakLock] App monitor stopped")
     }
 
+    /// Mark an app as authenticated (won't re-lock until session expires or is cleared).
+    func markAuthenticated(_ bundleIdentifier: String) {
+        authenticatedApps[bundleIdentifier] = Date()
+        NSLog("[MakLock] App authenticated, grace period started: %@", bundleIdentifier)
+    }
+
+    /// Clear authentication for all apps (e.g., on idle lock, sleep lock).
+    func clearAllAuthentications() {
+        authenticatedApps.removeAll()
+        NSLog("[MakLock] All app authentications cleared")
+    }
+
+    /// Clear authentication for a specific app.
+    func clearAuthentication(for bundleIdentifier: String) {
+        authenticatedApps.removeValue(forKey: bundleIdentifier)
+    }
+
     private func handleAppEvent(_ runningApp: NSRunningApplication) {
         guard let bundleID = runningApp.bundleIdentifier else { return }
 
@@ -59,6 +82,19 @@ final class AppMonitorService: ObservableObject {
         // Check if global protection is enabled
         let settings = Defaults.shared.appSettings
         guard settings.isProtectionEnabled else { return }
+
+        // Skip if app was recently authenticated (grace period)
+        if let authDate = authenticatedApps[bundleID] {
+            let elapsed = Date().timeIntervalSince(authDate)
+            if elapsed < gracePeriod {
+                return
+            }
+            // Grace period expired — remove and re-lock
+            authenticatedApps.removeValue(forKey: bundleID)
+        }
+
+        // Don't show overlay if one is already showing
+        guard !OverlayWindowService.shared.isShowing else { return }
 
         NSLog("[MakLock] Protected app detected: %@ (%@)", protectedApp.name, bundleID)
         detectedApp = protectedApp

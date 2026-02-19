@@ -30,12 +30,22 @@ final class OverlayWindowService {
         currentApp = app
         createOverlayWindows(for: app)
         startTimeoutTimer()
+
+        // Activate MakLock so the overlay gets focus (needed for Touch ID prompt)
+        NSApp.activate(ignoringOtherApps: true)
+
         NSLog("[MakLock] Overlay shown for: %@", app.name)
     }
 
     /// Hide all overlay windows.
     func hide() {
         stopTimeoutTimer()
+
+        // Mark the app as authenticated so it won't re-lock immediately
+        if let app = currentApp {
+            AppMonitorService.shared.markAuthenticated(app.bundleIdentifier)
+        }
+
         overlayWindows.forEach { $0.close() }
         overlayWindows.removeAll()
         currentApp = nil
@@ -79,6 +89,7 @@ final class OverlayWindowService {
 
             window.contentView = NSHostingView(rootView: overlayView)
             window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
             overlayWindows.append(window)
         }
     }
