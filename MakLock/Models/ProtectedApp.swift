@@ -17,6 +17,11 @@ struct ProtectedApp: Codable, Identifiable, Hashable {
     /// Whether protection is currently enabled for this app.
     var isEnabled: Bool
 
+    /// Whether to auto-close this app after inactivity timeout.
+    /// When enabled, the app will be terminated after the global inactive timeout
+    /// to prevent notifications from appearing while the app is locked.
+    var autoClose: Bool
+
     /// Date the app was added to the protected list.
     let dateAdded: Date
 
@@ -26,6 +31,7 @@ struct ProtectedApp: Codable, Identifiable, Hashable {
         name: String,
         path: String,
         isEnabled: Bool = true,
+        autoClose: Bool = false,
         dateAdded: Date = Date()
     ) {
         self.id = id
@@ -33,6 +39,7 @@ struct ProtectedApp: Codable, Identifiable, Hashable {
         self.name = name
         self.path = path
         self.isEnabled = isEnabled
+        self.autoClose = autoClose
         self.dateAdded = dateAdded
     }
 }

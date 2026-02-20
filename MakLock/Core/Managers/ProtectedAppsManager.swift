@@ -48,6 +48,18 @@ final class ProtectedAppsManager: ObservableObject {
         save()
     }
 
+    /// Toggle auto-close on or off for an app.
+    func toggleAutoClose(_ app: ProtectedApp) {
+        guard let index = apps.firstIndex(where: { $0.id == app.id }) else { return }
+        apps[index].autoClose.toggle()
+        save()
+
+        // Cancel pending timer if auto-close was disabled
+        if !apps[index].autoClose {
+            AppInactivityService.shared.cancelTimer(for: app.bundleIdentifier)
+        }
+    }
+
     /// Check whether an app with the given bundle identifier is protected and enabled.
     func isProtected(_ bundleIdentifier: String) -> Bool {
         return apps.contains { $0.bundleIdentifier == bundleIdentifier && $0.isEnabled }
