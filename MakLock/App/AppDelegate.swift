@@ -61,6 +61,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AppMonitorService.shared.startMonitoring()
         }
 
+        // Start auto-close monitoring if any protected app has auto-close enabled
+        if ProtectedAppsManager.shared.apps.contains(where: { $0.autoClose }) {
+            AppInactivityService.shared.startMonitoring()
+        }
+
         // Wire up idle monitor → lock all running protected apps
         IdleMonitorService.shared.onIdleTimeoutReached = { [weak self] in
             guard let self else { return }

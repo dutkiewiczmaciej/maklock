@@ -25,7 +25,16 @@ struct GeneralSettingsView: View {
                         Slider(
                             value: Binding(
                                 get: { Double(settings.idleTimeoutMinutes) },
-                                set: { settings.idleTimeoutMinutes = Int($0) }
+                                set: { newValue in
+                                    let minutes = Int(newValue)
+                                    settings.idleTimeoutMinutes = minutes
+                                    var current = Defaults.shared.appSettings
+                                    current.idleTimeoutMinutes = minutes
+                                    Defaults.shared.appSettings = current
+                                    if settings.lockOnIdle {
+                                        IdleMonitorService.shared.startMonitoring()
+                                    }
+                                }
                             ),
                             in: 1...30,
                             step: 1
@@ -36,13 +45,39 @@ struct GeneralSettingsView: View {
                     }
                 }
             }
+
+            Section {
+                HStack {
+                    Text("Auto-close timeout:")
+                    Slider(
+                        value: Binding(
+                            get: { Double(settings.inactiveCloseMinutes) },
+                            set: { newValue in
+                                let minutes = Int(newValue)
+                                settings.inactiveCloseMinutes = minutes
+                                var current = Defaults.shared.appSettings
+                                current.inactiveCloseMinutes = minutes
+                                Defaults.shared.appSettings = current
+                            }
+                        ),
+                        in: 1...60,
+                        step: 1
+                    )
+                    Text("\(settings.inactiveCloseMinutes) min")
+                        .frame(width: 50, alignment: .trailing)
+                        .monospacedDigit()
+                }
+
+                Text("Apps with the timer icon enabled will quit after this period of inactivity.")
+                    .font(MakLockTypography.caption)
+                    .foregroundColor(MakLockColors.textSecondary)
+            }
         }
         .formStyle(.grouped)
         .padding()
         .onChange(of: settings.launchAtLogin) { _ in save() }
         .onChange(of: settings.lockOnSleep) { _ in save() }
         .onChange(of: settings.lockOnIdle) { _ in save() }
-        .onChange(of: settings.idleTimeoutMinutes) { _ in save() }
     }
 
     private func save() {
@@ -54,6 +89,9 @@ struct GeneralSettingsView: View {
         } else {
             IdleMonitorService.shared.stopMonitoring()
         }
+
+        // Auto-close service is always running if any app has autoClose enabled
+        // (started in AppDelegate, timeout changes take effect on next timer)
 
         // Register or unregister launch at login
         updateLaunchAtLogin(enabled: settings.launchAtLogin)

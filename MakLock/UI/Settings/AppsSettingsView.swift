@@ -58,6 +58,16 @@ struct AppsSettingsView: View {
                             .foregroundColor(.secondary)
                     }
                     Spacer()
+
+                    // Auto-close toggle
+                    Button(action: { manager.toggleAutoClose(app) }) {
+                        Image(systemName: app.autoClose ? "timer" : "timer")
+                            .font(.system(size: 12))
+                            .foregroundColor(app.autoClose ? MakLockColors.gold : MakLockColors.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help(app.autoClose ? "Auto-close enabled" : "Enable auto-close when inactive")
+
                     Toggle("", isOn: Binding(
                         get: { app.isEnabled },
                         set: { _ in manager.toggleApp(app) }

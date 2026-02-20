@@ -27,6 +27,9 @@ struct AppSettings: Codable {
     /// Default: -70 dBm (~2-3 meters). Higher (less negative) = stricter.
     var watchRssiThreshold: Int = -70
 
+    /// Inactivity timeout (minutes) before auto-closing protected apps that have autoClose enabled.
+    var inactiveCloseMinutes: Int = 15
+
     /// Launch MakLock at login.
     var launchAtLogin: Bool = false
 }
