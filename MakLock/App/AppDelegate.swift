@@ -66,18 +66,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AppInactivityService.shared.startMonitoring()
         }
 
-        // Wire up idle monitor → lock all running protected apps
+        // Wire up idle monitor → lock/close all running protected apps
         IdleMonitorService.shared.onIdleTimeoutReached = { [weak self] in
-            guard let self else { return }
-            AppMonitorService.shared.clearAllAuthentications()
-            let runningBundleIDs = Set(NSWorkspace.shared.runningApplications.map(\.bundleIdentifier))
-            let apps = ProtectedAppsManager.shared.apps.filter { $0.isEnabled && runningBundleIDs.contains($0.bundleIdentifier) }
-            for app in apps {
-                OverlayWindowService.shared.show(for: app)
-            }
-            if !apps.isEmpty {
-                self.menuBarController.iconState = .locked
-            }
+            self?.lockOrCloseProtectedApps()
         }
 
         // Start idle monitoring if enabled
@@ -85,18 +76,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             IdleMonitorService.shared.startMonitoring()
         }
 
-        // Wire up sleep/wake → lock all running protected apps on sleep
+        // Wire up sleep → close autoClose apps, lock others if lockOnSleep enabled
         SleepWakeService.shared.onSleep = { [weak self] in
-            guard let self else { return }
-            AppMonitorService.shared.clearAllAuthentications()
-            let runningBundleIDs = Set(NSWorkspace.shared.runningApplications.map(\.bundleIdentifier))
-            let apps = ProtectedAppsManager.shared.apps.filter { $0.isEnabled && runningBundleIDs.contains($0.bundleIdentifier) }
-            for app in apps {
-                OverlayWindowService.shared.show(for: app)
-            }
-            if !apps.isEmpty {
-                self.menuBarController.iconState = .locked
-            }
+            self?.lockOrCloseProtectedApps(showOverlays: Defaults.shared.appSettings.lockOnSleep)
+        }
+
+        // On wake, terminate any auto-close apps that survived sleep
+        // and dismiss their overlays if any were shown
+        SleepWakeService.shared.onWake = { [weak self] in
+            self?.terminateAutoCloseApps()
         }
 
         // Start sleep/wake observer
@@ -115,22 +103,71 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.menuBarController.iconState = .active
         }
 
-        // Wire up Watch proximity → lock when Watch leaves range
+        // Wire up Watch proximity → lock/close when Watch leaves range
         WatchProximityService.shared.onWatchOutOfRange = { [weak self] in
-            guard let self else { return }
-            AppMonitorService.shared.clearAllAuthentications()
-            // Only lock apps that are actually running — don't create overlays for closed apps
-            let runningBundleIDs = Set(NSWorkspace.shared.runningApplications.map(\.bundleIdentifier))
-            let apps = ProtectedAppsManager.shared.apps.filter { $0.isEnabled && runningBundleIDs.contains($0.bundleIdentifier) }
-            for app in apps {
-                OverlayWindowService.shared.show(for: app)
-            }
-            if !apps.isEmpty {
-                self.menuBarController.iconState = .locked
-            }
+            self?.lockOrCloseProtectedApps()
         }
 
     }
+
+    // MARK: - Lock / Close Helpers
+
+    /// Lock or close all running protected apps.
+    /// Apps with autoClose → forceTerminate. Others → overlay (if showOverlays is true).
+    private func lockOrCloseProtectedApps(showOverlays: Bool = true) {
+        AppMonitorService.shared.clearAllAuthentications()
+        let runningBundleIDs = Set(NSWorkspace.shared.runningApplications.map(\.bundleIdentifier))
+        let apps = ProtectedAppsManager.shared.apps.filter {
+            $0.isEnabled && runningBundleIDs.contains($0.bundleIdentifier)
+        }
+
+        var showedOverlay = false
+        for app in apps {
+            if app.autoClose && !SafetyManager.isBlacklisted(app.bundleIdentifier) {
+                if let running = NSWorkspace.shared.runningApplications.first(where: {
+                    $0.bundleIdentifier == app.bundleIdentifier
+                }) {
+                    running.forceTerminate()
+                    NSLog("[MakLock] Auto-closed: %@ (%@)", app.name, app.bundleIdentifier)
+                }
+            } else if showOverlays {
+                OverlayWindowService.shared.show(for: app)
+                showedOverlay = true
+            }
+        }
+
+        if showedOverlay {
+            menuBarController.iconState = .locked
+        }
+    }
+
+    /// Terminate any running auto-close apps (safety net for wake from sleep).
+    /// Also dismisses overlay if it's showing for an auto-close app.
+    private func terminateAutoCloseApps() {
+        let runningBundleIDs = Set(NSWorkspace.shared.runningApplications.map(\.bundleIdentifier))
+        let autoCloseApps = ProtectedAppsManager.shared.apps.filter {
+            $0.isEnabled && $0.autoClose && runningBundleIDs.contains($0.bundleIdentifier)
+        }
+
+        for app in autoCloseApps {
+            guard !SafetyManager.isBlacklisted(app.bundleIdentifier) else { continue }
+
+            // Dismiss overlay if it's showing for this app
+            if OverlayWindowService.shared.currentBundleIdentifier == app.bundleIdentifier {
+                OverlayWindowService.shared.dismissAll()
+            }
+
+            if let running = NSWorkspace.shared.runningApplications.first(where: {
+                $0.bundleIdentifier == app.bundleIdentifier
+            }) {
+                running.forceTerminate()
+                AppMonitorService.shared.clearAuthentication(for: app.bundleIdentifier)
+                NSLog("[MakLock] Auto-closed on wake: %@ (%@)", app.name, app.bundleIdentifier)
+            }
+        }
+    }
+
+    // MARK: - Notifications
 
     /// Post a local notification when Watch auto-unlocks an app.
     static func sendWatchUnlockNotification(appName: String) {
