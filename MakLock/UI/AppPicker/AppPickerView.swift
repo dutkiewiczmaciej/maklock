@@ -83,9 +83,10 @@ struct AppPickerView: View {
         if searchText.isEmpty {
             return installedApps
         }
-        return installedApps.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.bundleIdentifier.localizedCaseInsensitiveContains(searchText)
+        return installedApps.filter { app in
+            app.name.localizedCaseInsensitiveContains(searchText) ||
+            app.bundleIdentifier.localizedCaseInsensitiveContains(searchText) ||
+            app.searchableNames.contains { $0.localizedCaseInsensitiveContains(searchText) }
         }
     }
 
@@ -117,10 +118,40 @@ struct AppPickerView: View {
                 let name = FileManager.default.displayName(atPath: path)
                     .replacingOccurrences(of: ".app", with: "")
 
+                // Collect alternative names for search
+                var searchNames: Set<String> = []
+
+                // Filename (always English on macOS, e.g. "Chess")
+                let fileName = (item as NSString).deletingPathExtension
+                searchNames.insert(fileName)
+
+                // CFBundleName / CFBundleDisplayName from Info.plist
+                if let bundleName = bundle.infoDictionary?["CFBundleName"] as? String {
+                    searchNames.insert(bundleName)
+                }
+                if let displayName = bundle.infoDictionary?["CFBundleDisplayName"] as? String {
+                    searchNames.insert(displayName)
+                }
+
+                // Localized names from all available .lproj/InfoPlist.strings
+                for localization in bundle.localizations {
+                    if let url = bundle.url(forResource: "InfoPlist", withExtension: "strings", subdirectory: nil, localization: localization),
+                       let dict = NSDictionary(contentsOf: url) as? [String: String] {
+                        if let n = dict["CFBundleDisplayName"] { searchNames.insert(n) }
+                        if let n = dict["CFBundleName"] { searchNames.insert(n) }
+                    }
+                    // Also check localized Info.plist directly
+                    if let localDict = bundle.localizedInfoDictionary {
+                        if let n = localDict["CFBundleDisplayName"] as? String { searchNames.insert(n) }
+                        if let n = localDict["CFBundleName"] as? String { searchNames.insert(n) }
+                    }
+                }
+
                 apps.append(AppInfo(
                     bundleIdentifier: bundleID,
                     name: name,
-                    path: path
+                    path: path,
+                    searchableNames: Array(searchNames)
                 ))
             }
         }
@@ -137,6 +168,8 @@ struct AppInfo: Identifiable {
     let bundleIdentifier: String
     let name: String
     let path: String
+    /// All localized names (English, Polish, etc.) for search.
+    var searchableNames: [String] = []
 }
 
 // MARK: - Row

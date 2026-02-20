@@ -117,9 +117,15 @@ struct LockOverlayView: View {
         authState = .authenticating
         errorMessage = nil
 
+        // Lower overlay level and pass through mouse so system Touch ID dialog gets full focus
+        OverlayWindowService.shared.setTouchIDMode(true)
+
         AuthenticationService.shared.authenticateWithTouchID(
             reason: "Unlock \(appName)"
         ) { result in
+            // Restore overlay level and mouse capture
+            OverlayWindowService.shared.setTouchIDMode(false)
+
             switch result {
             case .success:
                 onDismiss()

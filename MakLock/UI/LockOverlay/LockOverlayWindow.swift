@@ -10,7 +10,9 @@ final class LockOverlayWindow: NSWindow {
             defer: false
         )
 
-        self.level = .screenSaver
+        // Use statusBar level — high enough to be above normal windows and Dock,
+        // but below system security dialogs (Touch ID) which need focus priority
+        self.level = .statusBar
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         self.isOpaque = false
         self.backgroundColor = .clear

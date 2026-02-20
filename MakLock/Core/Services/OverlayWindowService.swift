@@ -70,8 +70,24 @@ final class OverlayWindowService {
         !overlayWindows.isEmpty
     }
 
+    /// During Touch ID: lower window level and pass through mouse events
+    /// so the system dialog gets full focus and Touch ID sensor works.
+    /// After auth: restore high level and mouse capture.
+    func setTouchIDMode(_ active: Bool) {
+        for window in overlayWindows {
+            if active {
+                window.level = .floating
+                window.ignoresMouseEvents = true
+            } else {
+                window.level = .statusBar
+                window.ignoresMouseEvents = false
+            }
+        }
+    }
+
     /// Enable key window status on overlay windows (needed for password input).
     func enableKeyboardInput() {
+        setTouchIDMode(false)
         for window in overlayWindows {
             window.allowKeyStatus = true
             window.makeKeyAndOrderFront(nil)
@@ -159,10 +175,10 @@ final class OverlayWindowService {
     private func activateProtectedApp(bundleIdentifier: String) {
         let runningApps = NSWorkspace.shared.runningApplications
         if let app = runningApps.first(where: { $0.bundleIdentifier == bundleIdentifier }) {
-            // Small delay to let overlay close first
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Delay to let overlay windows fully close before activating
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 app.unhide()
-                app.activate()
+                app.activate(options: .activateIgnoringOtherApps)
                 NSLog("[MakLock] Activated app: %@", bundleIdentifier)
             }
         }
