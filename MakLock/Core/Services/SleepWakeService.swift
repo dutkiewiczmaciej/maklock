@@ -51,8 +51,7 @@ final class SleepWakeService {
     // MARK: - Handlers
 
     @objc private func handleSleep(_ notification: Notification) {
-        guard Defaults.shared.appSettings.lockOnSleep else { return }
-        NSLog("[MakLock] System going to sleep — triggering auto-lock")
+        NSLog("[MakLock] System going to sleep")
         onSleep?()
     }
 
